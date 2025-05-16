@@ -31,6 +31,16 @@ export const useExchangeRateStore = defineStore('exchangeRate', {
         .map(rate => rate.toCurrency)
         .filter((value, index, self) => self.indexOf(value) === index) // Eliminar duplicados
         .sort()
+    },
+    currencyPairs: (state) => {
+      const pairs = {}
+      state.rates.forEach(rate => {
+        if (!pairs[rate.fromCurrency]) {
+          pairs[rate.fromCurrency] = []
+        }
+        pairs[rate.fromCurrency].push(rate.toCurrency)
+      })
+      return pairs
     }
   },
   actions: {
@@ -70,59 +80,58 @@ export const useExchangeRateStore = defineStore('exchangeRate', {
       }
     },
 
+    async createRate(payload) {
+      const uiStore = useUIStore();
+      try {
+        uiStore.showLoader('Creando tasa...')
+        const newRate = await ExchangeRateService.createRate(payload)
+        this.rates.push(newRate)
+        uiStore.showAlert({
+          type: 'success',
+          title: 'Éxito',
+          message: 'Tasa creada correctamente'
+        })
+        return newRate
+      } catch (error) {
+        uiStore.showAlert({
+          type: 'error',
+          title: 'Error',
+          message: error.message
+        })
+        throw error
+      } finally {
+        uiStore.hideLoader()
+      }
+    },
+  
+    async updateRate(id, payload) {
+      const uiStore = useUIStore()
+      try {
+        uiStore.showLoader('Actualizando tasa...')
+        const updatedRate = await ExchangeRateService.updateRate(id, payload)
+        const index = this.rates.findIndex(r => r.id === id)
+        if (index !== -1) {
+          this.rates.splice(index, 1, updatedRate)
+        }
+        uiStore.showAlert({
+          type: 'success',
+          title: 'Éxito',
+          message: 'Tasa actualizada correctamente'
+        })
+        return updatedRate
+      } catch (error) {
+        uiStore.showAlert({
+          type: 'error',
+          title: 'Error',
+          message: error.message
+        })
+        throw error
+      } finally {
+        uiStore.hideLoader()
+      }
+    },
     formatDate(dateString) {
       return new Date(dateString).toLocaleString();
-    }
-  },
-  
-  async createRate(payload) {
-    const uiStore = useUIStore()
-    try {
-      uiStore.showLoader('Creando tasa...')
-      const newRate = await ExchangeRateService.createRate(payload)
-      this.rates.push(newRate)
-      uiStore.showAlert({
-        type: 'success',
-        title: 'Éxito',
-        message: 'Tasa creada correctamente'
-      })
-      return newRate
-    } catch (error) {
-      uiStore.showAlert({
-        type: 'error',
-        title: 'Error',
-        message: error.message
-      })
-      throw error
-    } finally {
-      uiStore.hideLoader()
-    }
-  },
-
-  async updateRate(id, payload) {
-    const uiStore = useUIStore()
-    try {
-      uiStore.showLoader('Actualizando tasa...')
-      const updatedRate = await ExchangeRateService.updateRate(id, payload)
-      const index = this.rates.findIndex(r => r.id === id)
-      if (index !== -1) {
-        this.rates.splice(index, 1, updatedRate)
-      }
-      uiStore.showAlert({
-        type: 'success',
-        title: 'Éxito',
-        message: 'Tasa actualizada correctamente'
-      })
-      return updatedRate
-    } catch (error) {
-      uiStore.showAlert({
-        type: 'error',
-        title: 'Error',
-        message: error.message
-      })
-      throw error
-    } finally {
-      uiStore.hideLoader()
-    }
+    },
   },
 })

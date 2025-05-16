@@ -13,7 +13,7 @@
           class="full-width"
         >
           <el-option
-            v-for="currency in currencies"
+            v-for="currency in filteredToCurrencies"
             :key="'from-'+currency"
             :label="currency"
             :value="currency"
@@ -28,7 +28,7 @@
           class="full-width"
         >
           <el-option
-            v-for="currency in currencies"
+            v-for="currency in filteredToCurrencies"
             :key="'to-'+currency"
             :label="currency"
             :value="currency"
@@ -55,13 +55,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 
 const props = defineProps({
   currencies: {
     type: Array,
-    required: true
+    required: true 
   },
   rateToEdit: {
     type: Object,
@@ -119,6 +119,20 @@ const submitForm = async () => {
   }
 }
 
+const filteredToCurrencies = computed(() => 
+  props.currencies.filter(c => c !== form.value.fromCurrency)
+)
+watch(
+  () => props.rateToEdit,
+  (newRate) => {
+    if (newRate) {
+      form.value = { ...newRate }
+    } else {
+      resetForm()
+    }
+  },
+  { immediate: true } // Para que también lo cargue la primera vez
+)
 defineExpose({ show })
 </script>
 

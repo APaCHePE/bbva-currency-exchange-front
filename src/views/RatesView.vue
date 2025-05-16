@@ -59,12 +59,19 @@ const editRate = (rate) => {
 
 const handleSubmit = async (formData) => {
   try {
+    console.log("submit currentRate",currentRate.value);
+    
     if (currentRate.value) {
+      console.log("IF");
+      
       await exchangeStore.updateRate(currentRate.value.id, formData);
     } else {
+      console.log("else");
       await exchangeStore.createRate(formData);
     }
   } catch (error) {
+    console.log(error);
+    
     // El error ya se maneja en el store
   }
 };

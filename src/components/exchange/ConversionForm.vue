@@ -42,7 +42,7 @@
             class="full-width"
           >
             <el-option
-              v-for="currency in targetCurrencies"
+              v-for="currency in localTargetCurrencies"
               :key="'to-' + currency"
               :label="currency"
               :value="currency"
@@ -66,6 +66,8 @@
 
 <script setup>
 import { ref, watch, computed } from "vue";
+import { useExchangeRateStore } from "@/stores/exchange.store";
+import { useUIStore } from "@/stores/ui.store";
 
 const props = defineProps({
   availableCurrencies: {
@@ -92,6 +94,8 @@ const props = defineProps({
 
 const emit = defineEmits(["convert"]);
 
+const uiStore = useUIStore();
+const exchangeStore = useExchangeRateStore();
 const localAmount = ref(props.initialValues.amount);
 const localFromCurrency = ref(props.initialValues.fromCurrency);
 const localToCurrency = ref(props.initialValues.toCurrency);
@@ -105,7 +109,9 @@ const updateTargetCurrencies = () => {
     localToCurrency.value = props.targetCurrencies[0];
   }
 };
-
+const localTargetCurrencies = computed(() => {
+  return exchangeStore.targetCurrencies(localFromCurrency.value);
+});
 // Validar y emitir el evento de conversión
 const handleConvert = () => {
   if (!validateForm()) return;
@@ -118,13 +124,34 @@ const handleConvert = () => {
 };
 
 const validateForm = () => {
+  console.log("localAmount", localAmount.value);
+  console.log("localToCurrency", localToCurrency.value);
+  console.log("localFromCurrency", localFromCurrency.value);
+
   if (localAmount.value <= 0) {
-    emit("error", "Por favor ingrese un monto válido");
+    uiStore.showAlert({
+      type: "error",
+      title: "Validación",
+      message: "Por favor ingrese un monto válido",
+    });
+    return false;
+  }
+
+  if (!localToCurrency.value) {
+    uiStore.showAlert({
+      type: "error",
+      title: "Validación",
+      message: "Por favor seleccione una moneda de destino",
+    });
     return false;
   }
 
   if (localFromCurrency.value === localToCurrency.value) {
-    emit("error", "Las monedas deben ser diferentes");
+    uiStore.showAlert({
+      type: "error",
+      title: "Validación",
+      message: "Las monedas deben ser diferentes",
+    });
     return false;
   }
 
@@ -149,6 +176,10 @@ watch(
   () => props.targetCurrencies,
   () => validateCurrencies()
 );
+watch(localFromCurrency, (newFromCurrency) => {
+  const targets = exchangeStore.targetCurrencies(newFromCurrency);
+  localToCurrency.value = targets.length > 0 ? targets[0] : "";
+});
 
 // Sincronizar con cambios en las props iniciales
 watch(

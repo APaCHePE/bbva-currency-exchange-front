@@ -46,5 +46,5 @@ defineProps({
   }
 })
 
-defineEmits(['edit'])
+defineEmits(['editRate'])
 </script>

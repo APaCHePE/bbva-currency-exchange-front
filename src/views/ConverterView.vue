@@ -18,8 +18,8 @@
 
       <!-- Formulario de conversión -->
       <ConversionForm
-        :available-currencies="exchangeStore.availableCurrencies"
-        :target-currencies="targetCurrencies"
+        :available-currencies="fromCurrencies"
+        :loading="exchangeStore.loadingConversion"
         @convert="handleConvert"
       />
 
@@ -56,20 +56,19 @@ const form = ref({
   toCurrency: "PEN",
 });
 
-// Computed
+const fromCurrencies = computed(() => Object.keys(exchangeStore.currencyPairs));
+
 const targetCurrencies = computed(() => {
-  return exchangeStore.targetCurrencies(form.value.fromCurrency) || [];
+  return exchangeStore.currencyPairs[form.value.fromCurrency] || [];
 });
 
 const initializeDefaults = () => {
-  if (exchangeStore.availableCurrencies.length > 0) {
-    form.value.fromCurrency = exchangeStore.availableCurrencies.includes("USD")
+  if (fromCurrencies.value.length > 0) {
+    form.value.fromCurrency = fromCurrencies.value.includes("USD")
       ? "USD"
-      : exchangeStore.availableCurrencies[0];
+      : fromCurrencies.value[0];
 
-    form.value.toCurrency = targetCurrencies.value.includes("PEN")
-      ? "PEN"
-      : targetCurrencies.value[0];
+    form.value.toCurrency = targetCurrencies.value[0];
   }
 };
 // Métodos
@@ -79,6 +78,11 @@ const fetchRates = async () => {
 };
 
 const handleConvert = (payload) => {
+  form.value = {
+    amount: payload.amount,
+    fromCurrency: payload.from,
+    toCurrency: payload.to
+  };
   exchangeStore.convertCurrency(payload);
 };
 // Inicialización

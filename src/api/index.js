@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 
 const api = axios.create({
-  baseURL: process.env.VUE_APP_API_URL || 'https://6591bc06-9dab-4333-8704-56f909ede162.mock.pstmn.io',
+  baseURL: process.env.VUE_APP_API_URL || 'http://localhost:4040',
   timeout: 10000
 })
 

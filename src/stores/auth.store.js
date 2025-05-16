@@ -5,17 +5,20 @@ import {
   ref,
   computed
 } from 'vue'
-import api from '@/api'
 import router from '@/router'
+import {
+  useUIStore
+} from './ui.store'
 import {
   decodeJWT
 } from '@/utils/jwtUtils'
+import authApi from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
+  const uiStore = useUIStore();
   const token = ref(localStorage.getItem('token'))
   const userData = ref(JSON.parse(localStorage.getItem('userData') || null))
 
-  // Getters computados
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => {
     if (!userData.value) return false
@@ -24,24 +27,21 @@ export const useAuthStore = defineStore('auth', () => {
   const currentUser = computed(() => userData.value?.sub || null)
   const userRoles = computed(() => userData.value?.roles || [])
 
-  // Acción de login mejorada
   const login = async (credentials) => {
     try {
-      const response = await api.post('/auth/login', credentials)
+      uiStore.showLoader('Iniciando sesión...')
+      const response = await authApi.login(credentials)
 
-      token.value = response.data.data.token
+      token.value = response.data.data.token;
 
-      // Decodificar el JWT para extraer información
       const decoded = decodeJWT(token.value)
       if (!decoded) throw new Error('Invalid token')
 
-      // Verificar expiración
       const currentTime = Date.now() / 1000
       if (decoded.payload.exp < currentTime) {
         throw new Error('Token expired')
       }
 
-      // Extraer datos relevantes del payload
       userData.value = {
         sub: decoded.payload.sub,
         roles: decoded.payload.roles,
@@ -49,16 +49,23 @@ export const useAuthStore = defineStore('auth', () => {
         iss: decoded.payload.iss
       }
 
-      // Almacenar en localStorage
       localStorage.setItem('token', token.value)
       localStorage.setItem('userData', JSON.stringify(userData.value))
 
       return response.data
     } catch (error) {
+      uiStore.showAlert({
+        type: 'error',
+        title: 'Error de login',
+        message: error.message
+      })
       logout()
       throw error
+    } finally {
+      uiStore.hideLoader();
     }
   }
+
   const logout = () => {
     token.value = null
     userData.value = null
@@ -66,7 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('userData')
     router.push('/login')
   }
-  // Verificar autenticación al cargar la aplicación
+  
   const initialize = () => {
     if (token.value) {
       const decoded = decodeJWT(token.value)

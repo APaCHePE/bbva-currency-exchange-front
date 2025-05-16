@@ -16,9 +16,9 @@ const router = createRouter({
       name: 'login',
       component: LoginView,
       meta: {
-          title: 'Inicio de Sesión', // Título en español
-          requiresAuth: false,
-          hideNav: true // Para ocultar la barra de navegación en login
+        title: 'Inicio de Sesión',
+        requiresAuth: false,
+        hideNav: true
       }
     },
     {
@@ -48,7 +48,7 @@ const router = createRouter({
         }
       ]
     }, {
-      path: '/:pathMatch(.*)*', // Ruta comodín para cualquier ruta no encontrada
+      path: '/:pathMatch(.*)*',
       redirect: '/login'
     }
   ]

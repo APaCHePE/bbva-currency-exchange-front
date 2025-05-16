@@ -123,25 +123,10 @@ const handleLogin = async () => {
   try {
     loading.value = true;
     await loginForm.value.validate();
-
     await authStore.login(form.value);
-
-    ElMessage.success({
-      message: "Login exitoso! Redireccionando...",
-      duration: 1500,
-      showClose: true,
-    });
-
-    setTimeout(() => {
-      router.push("/");
-    }, 1500);
+    router.push("/");
   } catch (error) {
-    ElMessage.error({
-      message:
-        error.message || "Error al ingresar, Por favor intente nuevamente.",
-      duration: 3000,
-      showClose: true,
-    });
+    console.log(error);
   } finally {
     loading.value = false;
   }
